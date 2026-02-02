@@ -1,779 +1,644 @@
- 
+@php
+    // Get category data if available (similar to welcome page)
+    $cat = $category ?? null;
+    $primaryColor = $cat && $cat->primary_color ? $cat->primary_color : '#0284c7';
+    $secondaryColor = $cat && $cat->secondary_color ? $cat->secondary_color : '#0369a1';
+    $logo = $cat && $cat->logo_url ? (str_starts_with($cat->logo_url, 'http') ? $cat->logo_url : asset($cat->logo_url)) : null;
+    $brandName = $cat ? $cat->name : 'diensten';
+    $brandTagline = $cat && $cat->site_description ? $cat->site_description : 'Professionele Diensten';
+    $mainIcon = 'fa-briefcase';
+    
+    // Favicon
+    if ($cat && $cat->favicon_url) {
+        $favicon = str_starts_with($cat->favicon_url, 'http') ? $cat->favicon_url : asset($cat->favicon_url);
+    } else {
+        $iconColor = $primaryColor;
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><path fill="' . htmlspecialchars($iconColor, ENT_QUOTES, 'UTF-8') . '" d="M184 48h144c4.4 0 8 3.6 8 8V96H176V56c0-4.4 3.6-8 8-8zm-56 8V96H64C28.7 96 0 124.7 0 160v96H192 320 512V160c0-35.3-28.7-64-64-64H384V56c0-30.9-25.1-56-56-56H184c-30.9 0-56 25.1-56 56zM512 288H320v32c0 17.7-14.3 32-32 32H224c-17.7 0-32-14.3-32-32V288H0v128c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V288z"/></svg>';
+        $favicon = 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="nl" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8" />
-  <title>Maak Klantenaccount - diensten.pro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-  <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-  <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-  <link rel="apple-touch-icon" href="{{ asset('favicon.ico') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- intl-tel-input for country code selector -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/css/intlTelInput.css">
-  <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/intlTelInput.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            emerald: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    :root{
-      --bg:#ffffff; --card:#f8fafc; --muted:#64748b; --text:#1e293b;
-      --primary:#10b981; --primary-600:#059669; --ring:#10b981;
-      --error:#ef4444; --ok:#22c55e;
-    }
-    *{box-sizing:border-box}
-    html,body{
-      min-height:100vh;
-      margin:0;
-    }
-    body{
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;
-      background: #ffffff;
-      color:var(--text);
-      padding:24px;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    body.dark {
-      background: #111827;
-      --bg:#111827; --card:#1f2937; --muted:#9ca3af; --text:#f9fafb;
-    }
-    .container-wrapper{
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      min-height:calc(100vh - 48px);
-      padding:20px 0;
-    }
-    .shell{
-      width:100%; max-width:900px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
-      border:1px solid rgba(0,0,0,0.08);
-      border-radius:20px; box-shadow:0 30px 60px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,.8);
-      transition: all 0.3s ease;
-    }
-    body.dark .shell {
-      background: linear-gradient(180deg, rgba(31,41,55,0.95), rgba(31,41,55,0.9));
-      border-color: rgba(255,255,255,0.1);
-    }
-    .pane{
-      padding:34px 28px 28px;
-      background:rgba(255,255,255,.8); 
-      transition: background 0.3s ease;
-      overflow-y:auto;
-    }
-    .pane::-webkit-scrollbar {
-      width: 8px;
-    }
-    .pane::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.05);
-      border-radius: 4px;
-    }
-    .pane::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,0.2);
-      border-radius: 4px;
-    }
-    .pane::-webkit-scrollbar-thumb:hover {
-      background: rgba(0,0,0,0.3);
-    }
-    body.dark .pane::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.05);
-    }
-    body.dark .pane::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.2);
-    }
-    body.dark .pane::-webkit-scrollbar-thumb:hover {
-      background: rgba(255,255,255,0.3);
-    }
-    body.dark .pane {background:rgba(31,41,55,.8);}
-    @media (max-width: 768px) {
-      .pane {
-        padding:24px 20px 20px;
-      }
-      body {
-        padding: 12px;
-      }
-      .container-wrapper {
-        padding: 10px 0;
-        min-height: calc(100vh - 24px);
-      }
-    }
-    .brand{
-      display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:6px;
-      color:#059669; font-weight:700; letter-spacing:.3px;
-    }
-    body.dark .brand {color:#10b981;}
-    .title{margin:6px 0 2px; text-align:center; font-size:26px; font-weight:800; letter-spacing:.2px; color:var(--text);}
-    .subtitle{color:var(--muted); text-align:center; font-size:14px; margin-bottom:18px}
-
-    .alert{
-      padding:10px 12px; border-radius:10px; font-size:14px; margin-bottom:12px;
-      border:1px solid rgba(34,197,94,.2); background:rgba(34,197,94,.1); color:#166534;
-    }
-    .alert.error{background:rgba(239,68,68,.1); color:#dc2626; border-color:rgba(239,68,68,.2)}
-    body.dark .alert {background:rgba(34,197,94,.2); color:#86efac; border-color:rgba(34,197,94,.3)}
-    body.dark .alert.error {background:rgba(239,68,68,.2); color:#fca5a5; border-color:rgba(239,68,68,.3)}
-
-    .field{display:flex; flex-direction:column; gap:8px; margin:10px 0}
-    .label{font-size:12px; color:#475569}
-    body.dark .label {color:#9ca3af}
-    .control{
-      position:relative; background:rgba(0,0,0,.02);
-      border:1px solid rgba(0,0,0,.1); border-radius:10px;
-      display:flex; align-items:center; padding:10px 12px; gap:10px;
-      transition:border .2s, box-shadow .2s, background .2s;
-    }
-    .control:focus-within{ border-color:var(--ring); box-shadow:0 0 0 4px rgba(16,185,129,.15); background:rgba(255,255,255,.9) }
-    body.dark .control {background:rgba(0,0,0,.2); border-color:rgba(255,255,255,.1);}
-    body.dark .control:focus-within {background:rgba(0,0,0,.3);}
-    body.dark .control input {color:#f9fafb;}
-    .control input{ background:transparent; border:none; outline:none; color:var(--text); width:100%; font-size:14px; letter-spacing:.2px }
-    .control svg{opacity:.65}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Maak Klantenaccount - {{ $brandName }}.pro</title>
+    <meta name="description" content="Maak een klantenaccount aan op {{ $brandName }}.pro">
     
-    /* intl-tel-input styling integration */
-    .phone-control {
-      padding: 0 !important;
-      display: block !important;
-    }
-    .phone-control .iti {
-      width: 100%;
-      display: block;
-    }
-    .phone-control .iti__flag-container {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 2;
-    }
-    .phone-control .iti__selected-flag {
-      padding: 0 8px 0 0;
-      background: transparent;
-      border: none;
-    }
-    .phone-control .iti__selected-flag:hover {
-      background: transparent;
-    }
-    .phone-control .iti__arrow {
-      margin-left: 4px;
-      border-top-color: #64748b;
-      opacity: 0.7;
-    }
-    .phone-control input {
-      padding-left: 60px !important;
-      width: 100% !important;
-    }
-    body.dark .phone-control .iti__arrow {
-      border-top-color: #9ca3af;
-    }
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ $favicon }}">
+    <link rel="icon" type="image/x-icon" href="{{ $favicon }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ $favicon }}">
+    <link rel="apple-touch-icon" href="{{ $favicon }}">
     
-    /* intl-tel-input dropdown dark mode support */
-    body.dark .iti__country-list {
-      background-color: #1f2937;
-      border-color: #374151;
-      color: #f9fafb;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    body.dark .iti__country {
-      color: #f9fafb;
-    }
-    body.dark .iti__country:hover,
-    body.dark .iti__country.iti__highlight {
-      background-color: #374151;
-    }
-    body.dark .iti__search-input {
-      background-color: #1f2937;
-      color: #f9fafb;
-      border-color: #374151;
-    }
-    .toggle{
-      position:absolute; right:10px; top:50%; translate:0 -50%;
-      background:transparent; border:none; color:#64748b; cursor:pointer; font-size:12px
-    }
-    body.dark .toggle {color:#9ca3af}
-    .error{color:var(--error); font-size:12px; margin-top:-4px}
-    .hint{font-size:12px; color:#64748b; margin-top:2px}
-    body.dark .hint {color:#9ca3af}
-
-    .field-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; margin-top:12px; }
-    @media (max-width: 720px){ .field-grid{ grid-template-columns:1fr; } }
-    .span-2{ grid-column: 1 / -1; }
-
-    fieldset.section-card{ 
-      border:1px solid rgba(0,0,0,.08); 
-      border-radius:12px; 
-      background:rgba(248,250,252,.5); 
-      padding:20px; 
-      margin:16px 0; 
-    }
-    body.dark fieldset.section-card {
-      border-color: rgba(255,255,255,.1);
-      background: rgba(0,0,0,.2);
-    }
-    legend{ 
-      font-size:11px; 
-      font-weight:800; 
-      letter-spacing:.12em; 
-      text-transform:uppercase; 
-      color:var(--text); 
-      padding:0 8px; 
-    }
-
-    .input-wrap{position:relative}
-    .suggest{ 
-      position:absolute;
-      top:100%;
-      left:0;
-      right:0; 
-      background:rgba(255,255,255,.98);
-      border:1px solid rgba(0,0,0,.1); 
-      border-radius:12px;
-      margin-top:6px;
-      box-shadow:0 10px 24px rgba(0,0,0,.15); 
-      z-index:50;
-      max-height:240px;
-      overflow:auto;
-      display:none; 
-      backdrop-filter:blur(10px); 
-      min-height:50px; 
-    }
-    body.dark .suggest {
-      background: rgba(31,41,55,.98);
-      border-color: rgba(255,255,255,.1);
-    }
-    .s-item{ 
-      padding:10px 12px;
-      border-bottom:1px solid rgba(0,0,0,.06); 
-      cursor:pointer;
-      display:flex;
-      gap:8px;
-      align-items:flex-start; 
-      transition:background .2s; 
-    }
-    body.dark .s-item {border-bottom-color: rgba(255,255,255,.1);}
-    .s-item:last-child{border-bottom:0}
-    .s-item:hover,.s-item.active{background:rgba(16,185,129,.08)}
-    .s-badge{ 
-      font-size:10px;
-      padding:2px 6px;
-      border-radius:6px; 
-      border:1px solid rgba(16,185,129,.3);
-      background:rgba(16,185,129,.1); 
-      color:#059669;
-      white-space:nowrap;
-      font-weight:700; 
-    }
-    body.dark .s-badge {
-      border-color: rgba(16,185,129,.4);
-      background: rgba(16,185,129,.2);
-      color: #10b981;
-    }
-    .s-label{flex:1;color:var(--text);font-size:13px;line-height:1.4}
-
-    .btn{
-      appearance:none; width:100%; border:none; cursor:pointer;
-      background:linear-gradient(180deg, var(--primary), var(--primary-600));
-      color:#ffffff; font-weight:700; padding:14px 20px; border-radius:12px;
-      letter-spacing:.3px; box-shadow:0 4px 12px rgba(16,185,129,.3);
-      transition:all .2s ease; margin-top:24px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      font-size:15px;
-      text-decoration:none;
-    }
-    .btn:hover{
-      background:linear-gradient(180deg, var(--primary-600), #047857);
-      box-shadow:0 6px 16px rgba(16,185,129,.4);
-      transform:translateY(-1px);
-    }
-    .btn:active{
-      transform:translateY(0);
-      box-shadow:0 2px 8px rgba(16,185,129,.3);
-    }
-    .btn i{
-      font-size:16px;
-    }
-    .ghost{ 
-      background:transparent;
-      color:var(--text);
-      border:2px solid rgba(0,0,0,.12); 
-      box-shadow:none; 
-      font-weight:600;
-      margin-top:12px;
-      padding:12px 20px;
-    }
-    body.dark .ghost {
-      border-color: rgba(255,255,255,.2);
-      color:var(--text);
-    }
-    .ghost:hover {
-      background: rgba(0,0,0,.04);
-      border-color:rgba(0,0,0,.2);
-      transform:translateY(-1px);
-    }
-    body.dark .ghost:hover {
-      background: rgba(255,255,255,.08);
-      border-color:rgba(255,255,255,.3);
-    }
-    .ghost i{
-      font-size:14px;
-    }
-
-    .footer{display:flex; justify-content:center; gap:6px; margin-top:14px; font-size:14px; color:#64748b}
-    .footer a{color:#059669; text-decoration:none}
-    .footer a:hover{color:#10b981}
-    body.dark .footer{color:#9ca3af}
-    body.dark .footer a{color:#10b981}
-    body.dark .footer a:hover{color:#34d399}
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    .dark-mode-container {
-      position: fixed;
-      top: 24px;
-      right: 24px;
-      z-index: 1000;
-    }
-    @media (max-width: 768px) {
-      .dark-mode-container {
-        top: 12px;
-        right: 12px;
-      }
-    }
-  </style>
-</head>
-<body class="bg-white dark:bg-gray-900">
-  <div class="dark-mode-container">
-    <x-dark-mode-toggle />
-  </div>
-  <div class="container-wrapper">
-    <div class="shell">
-    <section class="pane">
-      <div class="brand">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10v7a2 2 0 0 0 2 2h3m11-9v7a2 2 0 0 1-2 2h-3M7 19v-6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v6M8 7h8M10 4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <span>diensten.pro</span>
-      </div>
-      <h1 class="title">Maak Klantenaccount</h1>
-      <p class="subtitle">Verbind met gekwalificeerde service providers in uw omgeving</p>
-
-      @if (session('success'))
-        <div class="alert" role="status">{{ session('success') }}</div>
-      @endif
-      @if (isset($errors) && $errors && $errors->any())
-        <div class="alert error" role="alert">Gelieve de hieronder gemarkeerde velden te corrigeren.</div>
-      @endif
-
-      <form method="POST" action="{{ route('client.register.store') }}" novalidate>
-        @csrf
-
-        <!-- Honeypot field - hidden from users, bots will fill it -->
-        <div style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" aria-hidden="true">
-          <label for="website">Website (laat leeg)</label>
-          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
-        </div>
-
-        <!-- UW GEGEVENS -->
-        <fieldset class="section-card">
-          <legend>UW GEGEVENS</legend>
-          <div class="field-grid">
-            <div class="field span-2">
-              <label class="label" for="full_name">Volledige naam</label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm7 9a7 7 0 0 0-14 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input id="full_name" name="full_name" value="{{ old('full_name') }}" placeholder="Jan Jansen" required>
-              </div>
-              @error('full_name')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field span-2">
-              <label class="label" for="whatsapp_number">WhatsApp nummer</label>
-              <div class="control phone-control">
-                <input id="whatsapp_number" name="whatsapp_number" type="tel" value="{{ old('whatsapp_number') }}" required>
-              </div>
-              @error('whatsapp_number')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field">
-              <label class="label" for="company_name">Bedrijfsnaam <span class="hint">(optioneel)</span></label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M3 7h18M3 3h18M7 21V7M17 21V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input id="company_name" name="company_name" value="{{ old('company_name') }}" placeholder="Laat leeg voor persoonlijk account">
-              </div>
-              @error('company_name')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field">
-              <label class="label" for="email">E-mail</label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6l8 6 8-6M4 6h16v12H4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input id="email" type="email" name="email" value="{{ old('email') }}" placeholder="u@example.com" required>
-              </div>
-              @error('email')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field">
-              <label class="label" for="password">Wachtwoord</label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 1 1 10 0v2M6 10h12v9H6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input id="password" type="password" name="password" placeholder="••••••••" required>
-                <button type="button" class="toggle" onclick="togglePass()">Toon</button>
-              </div>
-              @error('password')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field">
-              <label class="label" for="password_confirmation">Bevestig wachtwoord</label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 1 1 10 0v2M6 10h12v9H6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input id="password_confirmation" type="password" name="password_confirmation" placeholder="••••••••" required>
-              </div>
-              @error('password_confirmation')<div class="error">{{ $message }}</div>@enderror
-            </div>
-          </div>
-        </fieldset>
-
-        <!-- ADRES -->
-        <fieldset class="section-card">
-          <legend>ADRES</legend>
-          <div class="field-grid">
-            <div class="field span-2 input-wrap">
-              <label class="label" for="address">Straatadres</label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 10l9-7 9 7v8a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                <input id="address" name="address" value="{{ old('address') }}" placeholder="Begin met typen straat, nummer, stad…" autocomplete="off" required>
-                <input type="hidden" id="address_json" name="address_json" value="{{ old('address_json') }}">
-              </div>
-              <div id="suggest" class="suggest"></div>
-              <div class="hint">Begin met typen en kies een adres om de velden automatisch in te vullen.</div>
-            </div>
-
-            <div class="field">
-              <label class="label" for="number">Huisnummer</label>
-              <div class="control"><input id="number" name="number" value="{{ old('number') }}" placeholder="12A"></div>
-              @error('number')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field">
-              <label class="label" for="postal_code">Postcode</label>
-              <div class="control"><input id="postal_code" name="postal_code" value="{{ old('postal_code') }}" placeholder="1000"></div>
-              @error('postal_code')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field">
-              <label class="label" for="city">Stad</label>
-              <div class="control"><input id="city" name="city" value="{{ old('city') }}" placeholder="Brussel"></div>
-              @error('city')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
-            <div class="field"></div> <!-- spacer to keep symmetrical grid -->
-          </div>
-        </fieldset>
-
-        <button class="btn" type="submit">
-          <i class="fas fa-user-plus"></i> Maak klantenaccount
-        </button>
-        <a class="btn ghost" href="{{ route('login') }}">
-          <i class="fas fa-sign-in-alt"></i> Ik heb al een account
-        </a>
-      </form>
-    </section>
-    </div>
-  </div>
-
-  <script>
-    function togglePass(){
-      const inp = document.getElementById('password');
-      if(!inp) return;
-      inp.type = inp.type === 'password' ? 'text' : 'password';
-      event.currentTarget.textContent = inp.type === 'password' ? 'Toon' : 'Verberg';
-    }
-
-    // Initialize intl-tel-input for WhatsApp number
-    document.addEventListener('DOMContentLoaded', function() {
-      const whatsappInput = document.getElementById('whatsapp_number');
-      if (whatsappInput) {
-        const iti = window.intlTelInput(whatsappInput, {
-          initialCountry: "be", // Belgium default
-          preferredCountries: ["be", "nl", "fr", "de", "uk"],
-          separateDialCode: true,
-          utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/utils.js"
-        });
-
-        // On form submit, use the full international number
-        const form = whatsappInput.closest('form');
-        if (form) {
-          form.addEventListener('submit', function(e) {
-            const fullNumber = iti.getNumber(intlTelInputUtils.numberFormat.E164);
-            if (fullNumber) {
-              whatsappInput.value = fullNumber;
-            }
-          });
-        }
-      }
-
-      // Enhanced address search with Vlaanderen API and OSM fallback
-      const input = document.querySelector('#address');
-      const sugg = document.querySelector('#suggest');
-      const number = document.querySelector('#number');
-      const zip = document.querySelector('#postal_code');
-      const city = document.querySelector('#city');
-      const hidden = document.querySelector('#address_json');
-      
-      if (!input || !sugg || !number || !zip || !city || !hidden) { 
-        console.error('Adres zoek elementen niet gevonden'); 
-        return; 
-      }
-      
-      let items = []; 
-      let activeIndex = -1; 
-      let debounceId = null;
-
-      async function fetchJSON(url) {
-        const r = await fetch(url);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      }
-
-      async function searchSmart(qUser) {
-        console.log('searchSmart aangeroepen met:', qUser);
-        
-        try {
-          const results = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(qUser)}&c=10`);
-          console.log('Adres API resultaat:', results);
-          
-          if (Array.isArray(results) && results.length > 0) {
-            const hasVLStructure = results.some(item => item.Suggestion || item._vlLoc);
-            console.log('Gebruik van resultaten van:', hasVLStructure ? 'VL' : 'OSM');
-            return {data: results, src: hasVLStructure ? 'vl' : 'osm'};
-          }
-          
-          console.log('Geen resultaten gevonden');
-          return {data: [], src: 'vl'};
-        } catch(e) {
-          console.error('Adres zoek fout:', e);
-          return {data: [], src: 'vl'};
-        }
-      }
-
-      function escapeHtml(s) { 
-        return (s || '').replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); 
-      }
-
-      function renderList(list, src) {
-        if (!list || !list.length) {
-          sugg.innerHTML = `<div class="s-item"><span class="s-badge">Ø</span><span class="s-label">Geen resultaten</span></div>`;
-          sugg.style.display = 'block';
-          return;
-        }
-        
-        sugg.innerHTML = list.map((it, i) => {
-          const label = (src === 'vl') ? (it?.Suggestion?.Label || '') : (it?.display_name || '');
-          const b = (src === 'vl') ? 'VL' : 'OSM';
-          return `<div class="s-item${i === activeIndex ? ' active' : ''}" data-i="${i}" data-src="${b}">
-            <span class="s-badge">[${b}]</span>
-            <span class="s-label">${escapeHtml(label)}</span>
-          </div>`;
-        }).join('');
-        
-        sugg.style.display = 'block';
-        sugg.querySelectorAll('.s-item').forEach(el => {
-          el.addEventListener('mousedown', () => choose(parseInt(el.dataset.i, 10), el.dataset.src));
-        });
-      }
-
-      async function choose(i, srcBadge){
-        if (i<0 || i>=items.length) return;
-        const src = (srcBadge==='VL') ? 'vl' : 'osm';
-
-        const label = (src==='vl')
-          ? (items[i]?.Suggestion?.Label || '')
-          : (items[i]?.display_name || '');
-
-        input.value = label;
-        sugg.style.display = 'none';
-
-        try{
-          if (src==='vl'){
-            if (items[i] && items[i]._osmData) {
-              showOSM(items[i]._osmData);
-            } else if (items[i] && items[i]._vlLoc){
-              showVL(items[i]._vlLoc.Location, items[i]._vlLoc);
-            } else {
-              const detailedResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&detailed=1`);
-              if (detailedResults && detailedResults.length > 0 && detailedResults[0]._vlLoc) {
-                showVL(detailedResults[0]._vlLoc.Location, detailedResults[0]._vlLoc);
-              } else {
-                const osmResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&osm=1`);
-                if (osmResults && osmResults.length > 0) {
-                  showOSM(osmResults[0]);
-                } else {
-                  showVLFromLabel(label);
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- intl-tel-input for country code selector -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/css/intlTelInput.css">
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/intlTelInput.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '{{ $primaryColor }}10',
+                            100: '{{ $primaryColor }}20',
+                            500: '{{ $primaryColor }}',
+                            600: '{{ $primaryColor }}',
+                            700: '{{ $secondaryColor }}',
+                        }
+                    }
                 }
-              }
             }
-          } else {
-            showOSM(items[i]);
-          }
-        }catch(e){
-          console.error('Fout bij ophalen:', e.message);
         }
-      }
-
-      function showVL(L, rawArr) {
-        if (L) {
-          const streetName = L.Thoroughfarename || '';
-          const houseNumber = L.Housenumber || '';
-          const postalCode = L.Postalcode || '';
-          const municipality = L.Municipality || '';
-          
-          input.value = [streetName, houseNumber].filter(Boolean).join(' ');
-          number.value = houseNumber;
-          zip.value = postalCode;
-          city.value = municipality;
-          
-          hidden.value = JSON.stringify({
-            source: 'vl',
-            location: L,
-            raw: rawArr
-          });
+    </script>
+    
+    <style>
+        :root {
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
         }
-      }
+        .gradient-bg {
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        }
+        .btn-primary {
+            background-color: {{ $primaryColor }};
+        }
+        .btn-primary:hover {
+            background-color: {{ $secondaryColor }};
+        }
+        
+        /* intl-tel-input styling */
+        .phone-control .iti {
+            width: 100% !important;
+        }
+        .phone-control .iti__selected-flag {
+            padding: 0 8px 0 12px;
+        }
+        .phone-control .iti input {
+            padding-left: 70px !important;
+        }
+        
+        /* Address suggestions */
+        .suggest {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 4px;
+            box-shadow: 0 10px 24px rgba(0,0,0,.15);
+            z-index: 50;
+            max-height: 240px;
+            overflow: auto;
+            display: none;
+        }
+        .s-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            transition: background .2s;
+        }
+        .s-item:last-child {
+            border-bottom: 0;
+        }
+        .s-item:hover,
+        .s-item.active {
+            background: rgba(2, 132, 199, 0.08);
+        }
+        .s-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(2, 132, 199, 0.3);
+            background: rgba(2, 132, 199, 0.1);
+            color: #0284c7;
+            white-space: nowrap;
+            font-weight: 700;
+        }
+        .s-label {
+            flex: 1;
+            color: #1f2937;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
 
-      function showOSM(it) {
-        const addr = it?.address || {};
-        const streetName = addr.road || addr.pedestrian || addr.path || '';
-        const houseNumber = addr.house_number || '';
-        const postalCode = addr.postcode || '';
-        const cityName = addr.village || addr.town || addr.city || addr.municipality || '';
-        
-        input.value = [streetName, houseNumber].filter(Boolean).join(' ');
-        number.value = houseNumber;
-        zip.value = postalCode;
-        city.value = cityName;
-        
-        hidden.value = JSON.stringify({
-          source: 'osm',
-          address: it
+<body class="font-sans antialiased bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 md:h-20">
+                <div class="flex items-center space-x-2 md:space-x-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);">
+                        @if($logo)
+                            <img src="{{ $logo }}" alt="{{ $brandName }}" class="w-10 h-10 md:w-12 md:h-12 rounded-xl object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.logo-icon-fallback').style.display='flex';">
+                            <i class="fas {{ $mainIcon }} text-white text-lg md:text-xl logo-icon-fallback" style="display: none;"></i>
+                        @else
+                            <i class="fas {{ $mainIcon }} text-white text-lg md:text-xl"></i>
+                        @endif
+                    </div>
+                    <div>
+                        <a href="{{ route('welcome') }}" class="text-lg md:text-2xl font-bold text-gray-900 hover:text-primary-600 transition" style="--hover-color: {{ $primaryColor }};">
+                            {{ $brandName }}<span class="text-primary-600" style="color: {{ $primaryColor }};">.pro</span>
+                        </a>
+                        <p class="text-xs text-gray-500 -mt-1 hidden sm:block">{{ $brandTagline }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    @guest
+                        <a href="{{ route('login') }}" class="hidden sm:inline-block text-gray-700 hover:text-primary-600 px-4 py-2 rounded-lg font-medium transition">Inloggen</a>
+                        <a href="{{ route('register') }}" class="bg-primary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-primary-700 transition shadow-lg font-semibold text-sm sm:text-base" style="background-color: {{ $primaryColor }};" onmouseover="this.style.backgroundColor='{{ $secondaryColor }}'" onmouseout="this.style.backgroundColor='{{ $primaryColor }}'">
+                            Service Provider
+                        </a>
+                    @else
+                        <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-primary-600 px-4 py-2 rounded-lg font-medium transition">Dashboard</a>
+                    @endguest
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Client Register Section -->
+    <section class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);">
+                    @if($logo)
+                        <img src="{{ $logo }}" alt="{{ $brandName }}" class="w-20 h-20 rounded-2xl object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.header-logo-icon-fallback').style.display='flex';">
+                        <i class="fas {{ $mainIcon }} text-white text-3xl header-logo-icon-fallback" style="display: none;"></i>
+                    @else
+                        <i class="fas {{ $mainIcon }} text-white text-3xl"></i>
+                    @endif
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Maak Klantenaccount</h1>
+                <p class="text-base sm:text-lg text-gray-600">Verbind met gekwalificeerde service providers in uw omgeving</p>
+            </div>
+
+            <!-- Alerts -->
+            @if (session('success'))
+                <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm mb-6">
+                    {{ session('success') }}
+                </div>
+            @endif
+            @if (isset($errors) && $errors && $errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm mb-6">
+                    Gelieve de hieronder gemarkeerde velden te corrigeren.
+                </div>
+            @endif
+
+            <!-- Register Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100">
+                <form method="POST" action="{{ route('client.register.store') }}" class="space-y-6" novalidate>
+                    @csrf
+
+                    <!-- Honeypot field - hidden from users, bots will fill it -->
+                    <div style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" aria-hidden="true">
+                        <label for="website">Website (laat leeg)</label>
+                        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <!-- UW GEGEVENS -->
+                    <fieldset class="border border-gray-200 rounded-xl p-4 sm:p-6 bg-gray-50">
+                        <legend class="text-xs font-bold uppercase tracking-wider text-gray-700 px-2">Uw Gegevens</legend>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            <!-- Full Name -->
+                            <div class="sm:col-span-2">
+                                <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">Volledige naam *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-user text-gray-400"></i>
+                                    </div>
+                                    <input id="full_name" 
+                                           name="full_name" 
+                                           value="{{ old('full_name') }}" 
+                                           placeholder="Jan Jansen" 
+                                           required
+                                           class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                           style="--tw-ring-color: {{ $primaryColor }};">
+                                </div>
+                                @error('full_name')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- WhatsApp Number -->
+                            <div class="sm:col-span-2">
+                                <label for="whatsapp_number" class="block text-sm font-medium text-gray-700 mb-2">WhatsApp nummer *</label>
+                                <div class="relative phone-control">
+                                    <input id="whatsapp_number" 
+                                           name="whatsapp_number" 
+                                           type="tel" 
+                                           value="{{ old('whatsapp_number') }}" 
+                                           required
+                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                           style="--tw-ring-color: {{ $primaryColor }};">
+                                </div>
+                                @error('whatsapp_number')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Company Name -->
+                            <div>
+                                <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">Bedrijfsnaam <span class="text-gray-500 text-xs">(optioneel)</span></label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-building text-gray-400"></i>
+                                    </div>
+                                    <input id="company_name" 
+                                           name="company_name" 
+                                           value="{{ old('company_name') }}" 
+                                           placeholder="Laat leeg voor persoonlijk account"
+                                           class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                           style="--tw-ring-color: {{ $primaryColor }};">
+                                </div>
+                                @error('company_name')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Email -->
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-envelope text-gray-400"></i>
+                                    </div>
+                                    <input id="email" 
+                                           type="email" 
+                                           name="email" 
+                                           value="{{ old('email') }}" 
+                                           placeholder="u@example.com" 
+                                           required
+                                           class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                           style="--tw-ring-color: {{ $primaryColor }};">
+                                </div>
+                                @error('email')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Password -->
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Wachtwoord *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
+                                    <input id="password" 
+                                           type="password" 
+                                           name="password" 
+                                           placeholder="••••••••" 
+                                           required
+                                           class="block w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                           style="--tw-ring-color: {{ $primaryColor }};">
+                                    <button type="button" 
+                                            onclick="togglePassword()" 
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-600 hover:text-gray-900 transition">
+                                        <span id="toggle-text">Toon</span>
+                                    </button>
+                                </div>
+                                @error('password')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Password Confirmation -->
+                            <div>
+                                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Bevestig wachtwoord *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
+                                    <input id="password_confirmation" 
+                                           type="password" 
+                                           name="password_confirmation" 
+                                           placeholder="••••••••" 
+                                           required
+                                           class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                           style="--tw-ring-color: {{ $primaryColor }};">
+                                </div>
+                                @error('password_confirmation')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- ADRES -->
+                    <fieldset class="border border-gray-200 rounded-xl p-4 sm:p-6 bg-gray-50">
+                        <legend class="text-xs font-bold uppercase tracking-wider text-gray-700 px-2">Adres</legend>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            <!-- Address -->
+                            <div class="sm:col-span-2 relative">
+                                <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Straatadres *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-home text-gray-400"></i>
+                                    </div>
+                                    <input id="address" 
+                                           name="address" 
+                                           value="{{ old('address') }}" 
+                                           placeholder="Begin met typen straat, nummer, stad…" 
+                                           autocomplete="off" 
+                                           required
+                                           class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                           style="--tw-ring-color: {{ $primaryColor }};">
+                                    <input type="hidden" id="address_json" name="address_json" value="{{ old('address_json') }}">
+                                </div>
+                                <div id="suggest" class="suggest"></div>
+                                <p class="mt-1 text-xs text-gray-500">Begin te typen en kies een adres om de velden automatisch in te vullen.</p>
+                            </div>
+
+                            <!-- House Number -->
+                            <div>
+                                <label for="number" class="block text-sm font-medium text-gray-700 mb-2">Huisnummer</label>
+                                <input id="number" 
+                                       name="number" 
+                                       value="{{ old('number') }}" 
+                                       placeholder="12A"
+                                       class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                       style="--tw-ring-color: {{ $primaryColor }};">
+                                @error('number')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Postal Code -->
+                            <div>
+                                <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-2">Postcode *</label>
+                                <input id="postal_code" 
+                                       name="postal_code" 
+                                       value="{{ old('postal_code') }}" 
+                                       placeholder="1000"
+                                       required
+                                       class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                       style="--tw-ring-color: {{ $primaryColor }};">
+                                @error('postal_code')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- City -->
+                            <div>
+                                <label for="city" class="block text-sm font-medium text-gray-700 mb-2">Stad *</label>
+                                <input id="city" 
+                                       name="city" 
+                                       value="{{ old('city') }}" 
+                                       placeholder="Brussel"
+                                       required
+                                       class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                       style="--tw-ring-color: {{ $primaryColor }};">
+                                @error('city')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Submit Buttons -->
+                    <div class="space-y-3">
+                        <button type="submit" 
+                                class="w-full flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition text-base"
+                                style="background-color: {{ $primaryColor }};" 
+                                onmouseover="this.style.backgroundColor='{{ $secondaryColor }}'" 
+                                onmouseout="this.style.backgroundColor='{{ $primaryColor }}'">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Maak klantenaccount
+                        </button>
+                        <a href="{{ route('login') }}" 
+                           class="w-full flex items-center justify-center px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition text-base">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Ik heb al een account
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleText = document.getElementById('toggle-text');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleText.textContent = 'Verberg';
+            } else {
+                passwordInput.type = 'password';
+                toggleText.textContent = 'Toon';
+            }
+        }
+
+        // Initialize intl-tel-input for WhatsApp number
+        document.addEventListener('DOMContentLoaded', function() {
+            const whatsappInput = document.getElementById('whatsapp_number');
+            if (whatsappInput) {
+                const iti = window.intlTelInput(whatsappInput, {
+                    initialCountry: "be",
+                    preferredCountries: ["be", "nl", "fr", "de", "uk"],
+                    separateDialCode: true,
+                    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/utils.js"
+                });
+
+                const form = whatsappInput.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        const fullNumber = iti.getNumber(intlTelInputUtils.numberFormat.E164);
+                        if (fullNumber) {
+                            whatsappInput.value = fullNumber;
+                        }
+                    });
+                }
+            }
+
+            // Address search functionality
+            const input = document.querySelector('#address');
+            const sugg = document.querySelector('#suggest');
+            const number = document.querySelector('#number');
+            const zip = document.querySelector('#postal_code');
+            const city = document.querySelector('#city');
+            const hidden = document.querySelector('#address_json');
+            
+            if (!input || !sugg || !number || !zip || !city || !hidden) { 
+                return; 
+            }
+            
+            let items = []; 
+            let activeIndex = -1; 
+            let debounceId = null;
+
+            async function fetchJSON(url) {
+                const r = await fetch(url);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }
+
+            async function searchSmart(qUser) {
+                try {
+                    const results = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(qUser)}&c=10`);
+                    if (Array.isArray(results) && results.length > 0) {
+                        const hasVLStructure = results.some(item => item.Suggestion || item._vlLoc);
+                        return {data: results, src: hasVLStructure ? 'vl' : 'osm'};
+                    }
+                    return {data: [], src: 'vl'};
+                } catch(e) {
+                    console.error('Adres zoekfout:', e);
+                    return {data: [], src: 'vl'};
+                }
+            }
+
+            function escapeHtml(s) { 
+                return (s || '').replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); 
+            }
+
+            function renderList(list, src) {
+                if (!list || !list.length) {
+                    sugg.innerHTML = `<div class="s-item"><span class="s-badge">Ø</span><span class="s-label">Geen resultaten gevonden</span></div>`;
+                    sugg.style.display = 'block';
+                    return;
+                }
+                
+                sugg.innerHTML = list.map((it, i) => {
+                    const label = (src === 'vl') ? (it?.Suggestion?.Label || '') : (it?.display_name || '');
+                    const b = (src === 'vl') ? 'VL' : 'OSM';
+                    return `<div class="s-item${i === activeIndex ? ' active' : ''}" data-i="${i}" data-src="${b}">
+                        <span class="s-badge">[${b}]</span>
+                        <span class="s-label">${escapeHtml(label)}</span>
+                    </div>`;
+                }).join('');
+                
+                sugg.style.display = 'block';
+                sugg.querySelectorAll('.s-item').forEach(el => {
+                    el.addEventListener('mousedown', () => choose(parseInt(el.dataset.i, 10), el.dataset.src));
+                });
+            }
+
+            async function choose(i, srcBadge) {
+                if (i < 0 || i >= items.length) return;
+                const src = (srcBadge === 'VL') ? 'vl' : 'osm';
+                const label = (src === 'vl') ? (items[i]?.Suggestion?.Label || '') : (items[i]?.display_name || '');
+                input.value = label;
+                sugg.style.display = 'none';
+
+                try {
+                    if (src === 'vl') {
+                        if (items[i] && items[i]._osmData) {
+                            showOSM(items[i]._osmData);
+                        } else if (items[i] && items[i]._vlLoc) {
+                            showVL(items[i]._vlLoc.Location, items[i]._vlLoc);
+                        } else {
+                            const detailedResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&detailed=1`);
+                            if (detailedResults && detailedResults.length > 0 && detailedResults[0]._vlLoc) {
+                                showVL(detailedResults[0]._vlLoc.Location, detailedResults[0]._vlLoc);
+                            } else {
+                                const osmResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&osm=1`);
+                                if (osmResults && osmResults.length > 0) {
+                                    showOSM(osmResults[0]);
+                                } else {
+                                    showVLFromLabel(label);
+                                }
+                            }
+                        }
+                    } else {
+                        showOSM(items[i]);
+                    }
+                } catch(e) {
+                    console.error('Fout bij het ophalen van details:', e);
+                }
+            }
+
+            function showVL(L, rawArr) {
+                if (L) {
+                    const streetName = L.Thoroughfarename || '';
+                    const houseNumber = L.Housenumber || '';
+                    const postalCode = L.Postalcode || '';
+                    const municipality = L.Municipality || '';
+                    input.value = [streetName, houseNumber].filter(Boolean).join(' ');
+                    number.value = houseNumber;
+                    zip.value = postalCode;
+                    city.value = municipality;
+                    hidden.value = JSON.stringify({source: 'vl', location: L, raw: rawArr});
+                }
+            }
+
+            function showOSM(it) {
+                const addr = it?.address || {};
+                const streetName = addr.road || addr.pedestrian || addr.path || '';
+                const houseNumber = addr.house_number || '';
+                const postalCode = addr.postcode || '';
+                const cityName = addr.village || addr.town || addr.city || addr.municipality || '';
+                input.value = [streetName, houseNumber].filter(Boolean).join(' ');
+                number.value = houseNumber;
+                zip.value = postalCode;
+                city.value = cityName;
+                hidden.value = JSON.stringify({source: 'osm', address: it});
+            }
+
+            function showVLFromLabel(label) {
+                const parts = label.split(', ');
+                if (parts.length >= 2) {
+                    const streetPart = parts[0].trim();
+                    const cityPart = parts[1].trim();
+                    input.value = streetPart;
+                    city.value = cityPart;
+                }
+            }
+
+            input.addEventListener('input', function(e) {
+                const q = e.target.value.trim();
+                if (q.length < 2) {
+                    sugg.style.display = 'none';
+                    return;
+                }
+                clearTimeout(debounceId);
+                debounceId = setTimeout(async () => {
+                    const {data, src} = await searchSmart(q);
+                    items = data;
+                    activeIndex = -1;
+                    renderList(data, src);
+                }, 300);
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(() => { sugg.style.display = 'none'; }, 200);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                    renderList(items, 'vl');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIndex = Math.max(activeIndex - 1, -1);
+                    renderList(items, 'vl');
+                } else if (e.key === 'Enter' && activeIndex >= 0) {
+                    e.preventDefault();
+                    choose(activeIndex, 'VL');
+                }
+            });
         });
-      }
-
-      function showVLFromLabel(label) {
-        const parts = label.split(', ');
-        if (parts.length >= 2) {
-          const streetPart = parts[0].trim();
-          const cityPart = parts[1].trim();
-          
-          const streetMatch = streetPart.match(/^(.+?)\s+(\d+.*)$/);
-          const streetName = streetMatch ? streetMatch[1] : streetPart;
-          const houseNumber = streetMatch ? streetMatch[2] : '';
-          
-          const cityMatch = cityPart.match(/^(\d+)\s+(.+)$/);
-          const postalCode = cityMatch ? cityMatch[1] : '';
-          const cityName = cityMatch ? cityMatch[2] : cityPart;
-          
-          input.value = [streetName, houseNumber].filter(Boolean).join(' ');
-          number.value = houseNumber;
-          zip.value = postalCode;
-          city.value = cityName;
-          
-          hidden.value = JSON.stringify({
-            source: 'vl_parsed',
-            label: label,
-            parsed: {
-              streetName,
-              houseNumber,
-              postalCode,
-              cityName
-            }
-          });
-        }
-      }
-
-      input.addEventListener('input', () => {
-        const q = input.value.trim();
-        activeIndex = -1;
-        if (debounceId) clearTimeout(debounceId);
-        if (q.length < 2) { 
-          sugg.style.display = 'none'; 
-          return; 
-        }
-
-        sugg.innerHTML = `<div class="s-item"><span class="s-badge">...</span><span class="s-label">Zoeken...</span></div>`;
-        sugg.style.display = 'block';
-
-        debounceId = setTimeout(async () => {
-          try {
-            console.log('Zoeken naar:', q);
-            const {data, src} = await searchSmart(q);
-            console.log('Zoekresultaten:', data, src);
-            items = data || [];
-            renderList(items, src);
-          } catch(e) {
-            console.error('Adres zoek fout:', e);
-            items = [];
-            sugg.innerHTML = `<div class="s-item"><span class="s-badge">ERR</span><span class="s-label">Fout: ${escapeHtml(e.message)}</span></div>`;
-            sugg.style.display = 'block';
-          }
-        }, 350);
-      });
-
-      input.addEventListener('keydown', e => {
-        if (sugg.style.display === 'none') return;
-        const max = items.length - 1;
-        
-        if (e.key === 'ArrowDown') { 
-          e.preventDefault(); 
-          activeIndex = Math.min(activeIndex + 1, max); 
-          rerenderActive(); 
-        }
-        if (e.key === 'ArrowUp') { 
-          e.preventDefault(); 
-          activeIndex = Math.max(activeIndex - 1, 0); 
-          rerenderActive(); 
-        }
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const firstBadge = sugg.querySelector('.s-item')?.dataset.src || 'VL';
-          choose(activeIndex >= 0 ? activeIndex : 0, firstBadge);
-        }
-        if (e.key === 'Escape') { 
-          sugg.style.display = 'none'; 
-        }
-      });
-
-      function rerenderActive() {
-        const nodes = [...sugg.querySelectorAll('.s-item')];
-        nodes.forEach((n, i) => n.classList.toggle('active', i === activeIndex));
-      }
-
-      document.addEventListener('click', e => {
-        if (!sugg.contains(e.target) && e.target !== input) {
-          sugg.style.display = 'none';
-        }
-      });
-    });
-  </script>
-  
-  <!-- Alpine.js for dark mode toggle -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    </script>
 </body>
 </html>
- 

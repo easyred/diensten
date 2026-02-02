@@ -1,268 +1,256 @@
+@php
+    // Get category data if available (similar to welcome page)
+    $cat = $category ?? null;
+    $primaryColor = $cat && $cat->primary_color ? $cat->primary_color : '#0284c7';
+    $secondaryColor = $cat && $cat->secondary_color ? $cat->secondary_color : '#0369a1';
+    $logo = $cat && $cat->logo_url ? (str_starts_with($cat->logo_url, 'http') ? $cat->logo_url : asset($cat->logo_url)) : null;
+    $brandName = $cat ? $cat->name : 'diensten';
+    $brandTagline = $cat && $cat->site_description ? $cat->site_description : 'Professionele Diensten';
+    $mainIcon = 'fa-briefcase';
+    
+    // Favicon
+    if ($cat && $cat->favicon_url) {
+        $favicon = str_starts_with($cat->favicon_url, 'http') ? $cat->favicon_url : asset($cat->favicon_url);
+    } else {
+        $iconColor = $primaryColor;
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><path fill="' . htmlspecialchars($iconColor, ENT_QUOTES, 'UTF-8') . '" d="M184 48h144c4.4 0 8 3.6 8 8V96H176V56c0-4.4 3.6-8 8-8zm-56 8V96H64C28.7 96 0 124.7 0 160v96H192 320 512V160c0-35.3-28.7-64-64-64H384V56c0-30.9-25.1-56-56-56H184c-30.9 0-56 25.1-56 56zM512 288H320v32c0 17.7-14.3 32-32 32H224c-17.7 0-32-14.3-32-32V288H0v128c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V288z"/></svg>';
+        $favicon = 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="nl" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8" />
-  <title>Inloggen - diensten.pro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-  <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-  <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-  <link rel="apple-touch-icon" href="{{ asset('favicon.ico') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            emerald: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    :root{
-      --bg:#ffffff; --card:#f8fafc; --muted:#64748b; --text:#1e293b;
-      --primary:#10b981; --primary-600:#059669; --ring:#10b981;
-      --error:#ef4444; --ok:#22c55e;
-    }
-    *{box-sizing:border-box}
-    html,body{
-      min-height:100vh;
-      margin:0;
-    }
-    body{
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;
-      background: #ffffff;
-      color:var(--text);
-      padding:24px;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    body.dark {
-      background: #111827;
-      --bg:#111827; --card:#1f2937; --muted:#9ca3af; --text:#f9fafb;
-    }
-    .container-wrapper{
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      min-height:calc(100vh - 48px);
-      padding:20px 0;
-    }
-    .shell{
-      width:100%; max-width:480px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
-      border:1px solid rgba(0,0,0,0.08);
-      border-radius:20px; box-shadow:0 30px 60px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,.8);
-      transition: all 0.3s ease;
-    }
-    body.dark .shell {
-      background: linear-gradient(180deg, rgba(31,41,55,0.95), rgba(31,41,55,0.9));
-      border-color: rgba(255,255,255,0.1);
-    }
-    .pane{
-      padding:34px 28px 28px;
-      background:rgba(255,255,255,.8); 
-      transition: background 0.3s ease;
-      overflow-y:auto;
-    }
-    body.dark .pane {background:rgba(31,41,55,.8);}
-    @media (max-width: 768px) {
-      .pane {
-        padding:24px 20px 20px;
-      }
-      body {
-        padding: 12px;
-      }
-      .container-wrapper {
-        padding: 10px 0;
-        min-height: calc(100vh - 24px);
-      }
-    }
-    .brand{
-      display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:6px;
-      color:#059669; font-weight:700; letter-spacing:.3px;
-    }
-    body.dark .brand {color:#10b981;}
-    .title{margin:6px 0 2px; text-align:center; font-size:26px; font-weight:800; letter-spacing:.2px; color:var(--text);}
-    .subtitle{color:var(--muted); text-align:center; font-size:14px; margin-bottom:18px}
-
-    .alert{
-      padding:10px 12px; border-radius:10px; font-size:14px; margin-bottom:12px;
-      border:1px solid rgba(34,197,94,.2); background:rgba(34,197,94,.1); color:#166534;
-    }
-    .alert.error{background:rgba(239,68,68,.1); color:#dc2626; border-color:rgba(239,68,68,.2)}
-    body.dark .alert {background:rgba(34,197,94,.2); color:#86efac; border-color:rgba(34,197,94,.3)}
-    body.dark .alert.error {background:rgba(239,68,68,.2); color:#fca5a5; border-color:rgba(239,68,68,.3)}
-
-    .field{display:flex; flex-direction:column; gap:8px; margin:10px 0}
-    .label{font-size:12px; color:#475569}
-    body.dark .label {color:#9ca3af}
-    .control{
-      position:relative; background:rgba(0,0,0,.02);
-      border:1px solid rgba(0,0,0,.1); border-radius:10px;
-      display:flex; align-items:center; padding:10px 12px; gap:10px;
-      transition:border .2s, box-shadow .2s, background .2s;
-    }
-    .control:focus-within{ border-color:var(--ring); box-shadow:0 0 0 4px rgba(16,185,129,.15); background:rgba(255,255,255,.9) }
-    body.dark .control {background:rgba(0,0,0,.2); border-color:rgba(255,255,255,.1);}
-    body.dark .control:focus-within {background:rgba(0,0,0,.3);}
-    body.dark .control input {color:#f9fafb;}
-    .control input{ background:transparent; border:none; outline:none; color:var(--text); width:100%; font-size:14px; letter-spacing:.2px }
-    .control svg{opacity:.65}
-    .toggle{
-      position:absolute; right:10px; top:50%; translate:0 -50%;
-      background:transparent; border:none; color:#64748b; cursor:pointer; font-size:12px
-    }
-    body.dark .toggle {color:#9ca3af}
-    .error{color:var(--error); font-size:12px; margin-top:-4px}
-
-    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 0 14px}
-    .remember{display:flex; align-items:center; gap:8px; color:#64748b; font-size:13px; cursor:pointer}
-    body.dark .remember {color:#9ca3af}
-    .remember input[type="checkbox"]{
-      width:16px; height:16px; cursor:pointer; accent-color:var(--primary)
-    }
-    .row a{color:#059669; text-decoration:none; font-size:13px}
-    .row a:hover{color:#10b981}
-    body.dark .row a{color:#10b981}
-    body.dark .row a:hover{color:#34d399}
-
-    .btn{
-      appearance:none; width:100%; border:none; cursor:pointer;
-      background:linear-gradient(180deg, var(--primary), var(--primary-600));
-      color:#ffffff; font-weight:700; padding:14px 20px; border-radius:12px;
-      letter-spacing:.3px; box-shadow:0 4px 12px rgba(16,185,129,.3);
-      transition:all .2s ease; margin-top:24px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      font-size:15px;
-    }
-    .btn:hover{
-      background:linear-gradient(180deg, var(--primary-600), #047857);
-      box-shadow:0 6px 16px rgba(16,185,129,.4);
-      transform:translateY(-1px);
-    }
-    .btn:active{
-      transform:translateY(0);
-      box-shadow:0 2px 8px rgba(16,185,129,.3);
-    }
-    .btn i{
-      font-size:16px;
-    }
-
-    .footer{display:flex; justify-content:center; gap:6px; margin-top:14px; font-size:14px; color:#64748b}
-    .footer a{color:#059669; text-decoration:none}
-    .footer a:hover{color:#10b981}
-    body.dark .footer{color:#9ca3af}
-    body.dark .footer a{color:#10b981}
-    body.dark .footer a:hover{color:#34d399}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Inloggen - {{ $brandName }}.pro</title>
+    <meta name="description" content="Log in op uw {{ $brandName }}.pro account">
     
-    .dark-mode-container {
-      position: fixed;
-      top: 24px;
-      right: 24px;
-      z-index: 1000;
-    }
-    @media (max-width: 768px) {
-      .dark-mode-container {
-        top: 12px;
-        right: 12px;
-      }
-    }
-  </style>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ $favicon }}">
+    <link rel="icon" type="image/x-icon" href="{{ $favicon }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ $favicon }}">
+    <link rel="apple-touch-icon" href="{{ $favicon }}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '{{ $primaryColor }}10',
+                            100: '{{ $primaryColor }}20',
+                            500: '{{ $primaryColor }}',
+                            600: '{{ $primaryColor }}',
+                            700: '{{ $secondaryColor }}',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        }
+        .btn-primary {
+            background-color: {{ $primaryColor }};
+        }
+        .btn-primary:hover {
+            background-color: {{ $secondaryColor }};
+        }
+    </style>
 </head>
-<body class="bg-white dark:bg-gray-900">
-  <div class="dark-mode-container">
-    <x-dark-mode-toggle />
-  </div>
-  <div class="container-wrapper">
-    <div class="shell">
-    <section class="pane">
-      <div class="brand">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10v7a2 2 0 0 0 2 2h3m11-9v7a2 2 0 0 1-2 2h-3M7 19v-6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v6M8 7h8M10 4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <span>diensten.pro</span>
-      </div>
-      <h1 class="title">Inloggen</h1>
-      <p class="subtitle">Log in met uw e-mail en wachtwoord</p>
 
-      @if (session('status'))
-        <div class="alert">{{ session('status') }}</div>
-      @endif
-
-      @if ($errors->any())
-        <div class="alert error">Controleer uw e-mail en wachtwoord.</div>
-      @endif
-
-      <form method="POST" action="{{ route('login.store') }}" novalidate>
-        @csrf
-
-        <div class="field">
-          <label class="label" for="email">E-mail</label>
-          <div class="control">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6l8 6 8-6M4 6h16v12H4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" placeholder="u@example.com" required autofocus autocomplete="username">
-          </div>
-          @error('email') <div class="error">{{ $message }}</div> @enderror
+<body class="font-sans antialiased bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 md:h-20">
+                <div class="flex items-center space-x-2 md:space-x-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);">
+                        @if($logo)
+                            <img src="{{ $logo }}" alt="{{ $brandName }}" class="w-10 h-10 md:w-12 md:h-12 rounded-xl object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.logo-icon-fallback').style.display='flex';">
+                            <i class="fas {{ $mainIcon }} text-white text-lg md:text-xl logo-icon-fallback" style="display: none;"></i>
+                        @else
+                            <i class="fas {{ $mainIcon }} text-white text-lg md:text-xl"></i>
+                        @endif
+                    </div>
+                    <div>
+                        <a href="{{ route('welcome') }}" class="text-lg md:text-2xl font-bold text-gray-900 hover:text-primary-600 transition" style="--hover-color: {{ $primaryColor }};">
+                            {{ $brandName }}<span class="text-primary-600" style="color: {{ $primaryColor }};">.pro</span>
+                        </a>
+                        <p class="text-xs text-gray-500 -mt-1 hidden sm:block">{{ $brandTagline }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    @guest
+                        <a href="{{ route('register', $cat ? ['category' => $cat->code] : []) }}" class="hidden sm:inline-block text-gray-700 hover:text-primary-600 px-4 py-2 rounded-lg font-medium transition">Registreren</a>
+                        <a href="{{ route('register', $cat ? ['category' => $cat->code] : []) }}" class="bg-primary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-primary-700 transition shadow-lg font-semibold text-sm sm:text-base" style="background-color: {{ $primaryColor }};" onmouseover="this.style.backgroundColor='{{ $secondaryColor }}'" onmouseout="this.style.backgroundColor='{{ $primaryColor }}'">
+                            Gratis Aanmelden
+                        </a>
+                    @else
+                        <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-primary-600 px-4 py-2 rounded-lg font-medium transition">Dashboard</a>
+                    @endguest
+                </div>
+            </div>
         </div>
+    </nav>
 
-        <div class="field">
-          <label class="label" for="password">Wachtwoord</label>
-          <div class="control">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 1 1 10 0v2M6 10h12v9H6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <input id="password" type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
-            <button type="button" class="toggle" onclick="togglePass()">Toon</button>
-          </div>
-          @error('password') <div class="error">{{ $message }}</div> @enderror
+    <!-- Login Section -->
+    <section class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Header -->
+            <div class="text-center">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);">
+                    @if($logo)
+                        <img src="{{ $logo }}" alt="{{ $brandName }}" class="w-20 h-20 rounded-2xl object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.header-logo-icon-fallback').style.display='flex';">
+                        <i class="fas {{ $mainIcon }} text-white text-3xl header-logo-icon-fallback" style="display: none;"></i>
+                    @else
+                        <i class="fas {{ $mainIcon }} text-white text-3xl"></i>
+                    @endif
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Inloggen</h1>
+                <p class="text-base sm:text-lg text-gray-600">Log in met uw e-mail en wachtwoord</p>
+            </div>
+
+            <!-- Alerts -->
+            @if (session('status'))
+                <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                    Controleer uw e-mail en wachtwoord.
+                </div>
+            @endif
+
+            <!-- Login Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100">
+                <form method="POST" action="{{ route('login.store') }}" class="space-y-6" novalidate>
+                    @csrf
+
+                    <!-- Email Field -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-gray-400"></i>
+                            </div>
+                            <input id="email" 
+                                   type="email" 
+                                   name="email" 
+                                   value="{{ old('email') }}" 
+                                   placeholder="u@example.com" 
+                                   required 
+                                   autofocus 
+                                   autocomplete="username"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                   style="--tw-ring-color: {{ $primaryColor }};">
+                        </div>
+                        @error('email')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Wachtwoord</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input id="password" 
+                                   type="password" 
+                                   name="password" 
+                                   placeholder="••••••••" 
+                                   required 
+                                   autocomplete="current-password"
+                                   class="block w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
+                                   style="--tw-ring-color: {{ $primaryColor }};">
+                            <button type="button" 
+                                    onclick="togglePassword()" 
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-600 hover:text-gray-900 transition">
+                                <span id="toggle-text">Toon</span>
+                            </button>
+                        </div>
+                        @error('password')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Remember & Forgot -->
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center">
+                            <input id="remember_me" 
+                                   type="checkbox" 
+                                   name="remember" 
+                                   class="w-4 h-4 rounded border-gray-300 focus:ring-primary-500"
+                                   style="accent-color: {{ $primaryColor }};">
+                            <span class="ml-2 text-sm text-gray-600">Onthoud mij</span>
+                        </label>
+
+                        @if (Route::has('password.request'))
+                            <a href="{{ route('password.request') }}" class="text-sm font-medium transition" style="color: {{ $primaryColor }};">
+                                Wachtwoord vergeten?
+                            </a>
+                        @endif
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition text-base"
+                            style="background-color: {{ $primaryColor }};" 
+                            onmouseover="this.style.backgroundColor='{{ $secondaryColor }}'" 
+                            onmouseout="this.style.backgroundColor='{{ $primaryColor }}'">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Inloggen
+                    </button>
+                </form>
+
+                <!-- Footer Link -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Geen account? 
+                        <a href="{{ route('register', $cat ? ['category' => $cat->code] : []) }}" class="font-semibold transition" style="color: {{ $primaryColor }};">
+                            Registreer hier
+                        </a>
+                    </p>
+                </div>
+            </div>
         </div>
-
-        <div class="row">
-          <label class="remember">
-            <input id="remember_me" type="checkbox" name="remember">
-            <span>Onthoud mij</span>
-          </label>
-
-          @if (Route::has('password.request'))
-            <a href="{{ route('password.request') }}">Wachtwoord vergeten?</a>
-          @endif
-        </div>
-
-        <button class="btn" type="submit">
-          <i class="fas fa-sign-in-alt"></i> Inloggen
-        </button>
-
-      </form>
-
-      <div class="footer">
-        <span>Geen account?</span>
-        <a href="{{ route('register') }}">Registreer hier</a>
-      </div>
     </section>
-    </div>
-  </div>
 
-  <script>
-    function togglePass(){
-      const inp = document.getElementById('password');
-      if(!inp) return;
-      const btn = event.currentTarget;
-      const toShow = inp.type === 'password';
-      inp.type = toShow ? 'text' : 'password';
-      btn.textContent = toShow ? 'Verberg' : 'Toon';
-    }
-  </script>
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleText = document.getElementById('toggle-text');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleText.textContent = 'Verberg';
+            } else {
+                passwordInput.type = 'password';
+                toggleText.textContent = 'Toon';
+            }
+        }
+    </script>
 </body>
 </html>
-
